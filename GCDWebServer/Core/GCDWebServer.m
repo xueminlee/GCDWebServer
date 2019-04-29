@@ -211,7 +211,8 @@ static void _ExecuteMainThreadRunLoopSources() {
   GWS_DCHECK([NSThread isMainThread]);
   if (_backgroundTask == UIBackgroundTaskInvalid) {
     GWS_LOG_DEBUG(@"Did start background task");
-    _backgroundTask = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
+    Class UIApplicationClass = NSClassFromString(@"UIApplication");
+    _backgroundTask = [[UIApplicationClass sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
       GWS_LOG_WARNING(@"Application is being suspended while %@ is still connected", [self class]);
       [self _endBackgroundTask];
     }];
@@ -230,7 +231,8 @@ static void _ExecuteMainThreadRunLoopSources() {
   GWS_LOG_DEBUG(@"Did connect");
 
 #if TARGET_OS_IPHONE
-  if ([[UIApplication sharedApplication] applicationState] != UIApplicationStateBackground) {
+  Class UIApplicationClass = NSClassFromString(@"UIApplication");
+  if ([[UIApplicationClass sharedApplication] applicationState] != UIApplicationStateBackground) {
     [self _startBackgroundTask];
   }
 #endif
@@ -265,10 +267,11 @@ static void _ExecuteMainThreadRunLoopSources() {
 - (void)_endBackgroundTask {
   GWS_DCHECK([NSThread isMainThread]);
   if (_backgroundTask != UIBackgroundTaskInvalid) {
-    if (_suspendInBackground && ([[UIApplication sharedApplication] applicationState] == UIApplicationStateBackground) && _source4) {
+    Class UIApplicationClass = NSClassFromString(@"UIApplication");
+    if (_suspendInBackground && ([[UIApplicationClass sharedApplication] applicationState] == UIApplicationStateBackground) && _source4) {
       [self _stop];
     }
-    [[UIApplication sharedApplication] endBackgroundTask:_backgroundTask];
+    [[UIApplicationClass sharedApplication] endBackgroundTask:_backgroundTask];
     _backgroundTask = UIBackgroundTaskInvalid;
     GWS_LOG_DEBUG(@"Did end background task");
   }
@@ -733,8 +736,9 @@ static inline NSString* _EncodeBase64(NSString* string) {
   if (_options == nil) {
     _options = options ? [options copy] : @{};
 #if TARGET_OS_IPHONE
+    Class UIApplicationClass = NSClassFromString(@"UIApplication");
     _suspendInBackground = [(NSNumber*)_GetOption(_options, GCDWebServerOption_AutomaticallySuspendInBackground, @YES) boolValue];
-    if (((_suspendInBackground == NO) || ([[UIApplication sharedApplication] applicationState] != UIApplicationStateBackground)) && ![self _start:error])
+    if (((_suspendInBackground == NO) || ([[UIApplicationClass sharedApplication] applicationState] != UIApplicationStateBackground)) && ![self _start:error])
 #else
     if (![self _start:error])
 #endif
